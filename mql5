@@ -1,0 +1,95 @@
+mql5
+//+------------------------------------------------------------------+
+//|                        MP Heatmap for MT5                         |
+//|                   Developer: Forex Robot Easy Team                |
+//|               Website: forexroboteasy.com                         |
+//+------------------------------------------------------------------+
+
+//+------------------------------------------------------------------+
+//|                        Global Variables                           |
+//+------------------------------------------------------------------+
+int symbolCount;                // Number of symbols in Market Watch
+string[] symbols;               // Array to store symbol names
+double[] percentageChange;      // Array to store percentage change of each symbol
+color[] colors;                 // Array to store color corresponding to each symbol
+
+//+------------------------------------------------------------------+
+//|                     Customizable Settings                         |
+//+------------------------------------------------------------------+
+input int symbolSize = 10;      // Size of each symbol's representation on the heatmap
+
+//+------------------------------------------------------------------+
+//|                        Initialization                            |
+//+------------------------------------------------------------------+
+void OnInit()
+{
+   symbolCount = SymbolsTotal();
+   ArrayResize(symbols, symbolCount);
+   ArrayResize(percentageChange, symbolCount);
+   ArrayResize(colors, symbolCount);
+}
+
+//+------------------------------------------------------------------+
+//|                     Calculate Percentage Change                   |
+//+------------------------------------------------------------------+
+void CalculatePercentageChange()
+{
+   for(int i = 0; i < symbolCount; i++)
+   {
+      double currentPrice = SymbolInfoDouble(symbols[i], SYMBOL_LAST);
+      double previousPrice = SymbolInfoDouble(symbols[i], SYMBOL_CLOSE);
+
+      percentageChange[i] = (currentPrice - previousPrice) / previousPrice * 100.0;
+   }
+}
+
+//+------------------------------------------------------------------+
+//|                     Generate Color Codes                          |
+//+------------------------------------------------------------------+
+void GenerateColorCodes()
+{
+   for(int i = 0; i < symbolCount; i++)
+   {
+      if (percentageChange[i] > 0)
+         colors[i] = clrGreen;
+      else if (percentageChange[i] < 0)
+         colors[i] = clrRed;
+      else
+         colors[i] = clrGray;
+   }
+}
+
+//+------------------------------------------------------------------+
+//|                     Draw MP Heatmap                               |
+//+------------------------------------------------------------------+
+void DrawHeatmap()
+{
+   for(int i = 0; i < symbolCount; i++)
+   {
+      double x = i * symbolSize;
+      double y = 0;
+      double width = symbolSize;
+      double height = symbolSize;
+
+      ObjectCreate(symbols[i], OBJ_RECTANGLE_LABEL, 0, 0, 0);
+      ObjectSet(symbols[i], OBJPROP_CORNER, CORNER_LEFT_UPPER);
+      ObjectSet(symbols[i], OBJPROP_XDISTANCE, x);
+      ObjectSet(symbols[i], OBJPROP_YDISTANCE, y);
+      ObjectSet(symbols[i], OBJPROP_WIDTH, width);
+      ObjectSet(symbols[i], OBJPROP_HEIGHT, height);
+      ObjectSet(symbols[i], OBJPROP_BGCOLOR, colors[i]);
+   }
+}
+
+//+------------------------------------------------------------------+
+//|                        Main Program                               |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+   if (IsNewBar())
+   {
+      CalculatePercentageChange();
+      GenerateColorCodes();
+      DrawHeatmap();
+   }
+}
